@@ -22,3 +22,9 @@ python oreja.py audio.wav > text.txt
 ```bash
 pip install openai
 ```
+
+Remember to set your OpenAI API key as an environment variable.
+
+```bash
+export OPENAI_API_KEY="sk-proj-..."
+```
