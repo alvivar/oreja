@@ -27,6 +27,13 @@ def tts(text, path, voice="nova"):
             file.write(chunk)
 
 
+def try_tts(text, output_path, voice):
+    if output_path is None:
+        raise ValueError("Output file path is required for text-to-speech")
+    tts(text, output_path, voice)
+    print(f"Speech generated and saved to {output_path}")
+
+
 if __name__ == "__main__":
     description = "Transcribe audio files or generate speech from text using OpenAI."
     input = "Audio file path for transcription, or text content for text-to-speech"
@@ -64,22 +71,11 @@ if __name__ == "__main__":
             try:
                 with open(args.input, "r", encoding="utf-8") as file:
                     content = file.read()
-
-                if args.output is None:
-                    raise ValueError("Output file path is required for text-to-speech")
-
-                tts(content, args.output, args.voice)
-                print(f"Speech generated and saved to {args.output}")
-
+                try_tts(content, args.output, args.voice)
             except UnicodeDecodeError:
                 print(transcribe(args.input))
-
         else:
-            if args.output is None:
-                raise ValueError("Output file path is required for text-to-speech")
-
-            tts(args.input, args.output, args.voice)
-            print(f"Speech generated and saved to {args.output}")
+            try_tts(args.input, args.output, args.voice)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
