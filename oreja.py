@@ -1,5 +1,7 @@
+import sys
 from openai import OpenAI
 import argparse
+import os
 
 
 def transcribe(path):
@@ -7,19 +9,77 @@ def transcribe(path):
     with open(path, "rb") as audio:
         config = {"model": "whisper-1", "file": audio}
         transcription = client.audio.transcriptions.create(**config)
+
     return transcription.text
 
 
+def tts(text, path, voice="nova"):
+    client = OpenAI()
+
+    response = client.audio.speech.create(
+        model="tts-1",
+        voice=voice,
+        input=text,
+    )
+
+    with open(path, "wb") as file:
+        for chunk in response.iter_bytes():
+            file.write(chunk)
+
+
 if __name__ == "__main__":
-    description = "Transcribe audio files using OpenAI's Whisper model."
-    help = "Path to the audio file to transcribe."
+    description = "Transcribe audio files or generate speech from text using OpenAI."
+    input = "Audio file path for transcription, or text content for text-to-speech"
+    output = "Path to save the generated audio file (required for text-to-speech)"
+    voice = "Voice model for text-to-speech (default: nova)"
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("audio_file", type=str, help=help)
+    parser.add_argument(
+        "input",
+        type=str,
+        help=input,
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        help=output,
+        default=None,
+    )
+    parser.add_argument(
+        "--voice",
+        type=str,
+        choices=["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+        default="nova",
+        help=voice,
+    )
     args = parser.parse_args()
 
+    # Determine if the input is a file or direct text.
+    # If it's a file, check if it's text or audio.
+    # If it's not a text file, assume it's an audio file.
+    # Use direct text input for TTS if not a file.
+
     try:
-        result = transcribe(args.audio_file)
-        print(result)
+        if os.path.isfile(args.input):
+            try:
+                with open(args.input, "r", encoding="utf-8") as file:
+                    content = file.read()
+
+                if args.output is None:
+                    raise ValueError("Output file path is required for text-to-speech")
+
+                tts(content, args.output, args.voice)
+                print(f"Speech generated and saved to {args.output}")
+
+            except UnicodeDecodeError:
+                print(transcribe(args.input))
+
+        else:
+            if args.output is None:
+                raise ValueError("Output file path is required for text-to-speech")
+
+            tts(args.input, args.output, args.voice)
+            print(f"Speech generated and saved to {args.output}")
+
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
