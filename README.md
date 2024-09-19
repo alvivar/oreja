@@ -28,3 +28,10 @@ Remember to set your OpenAI API key as an environment variable.
 ```bash
 export OPENAI_API_KEY="sk-proj-..."
 ```
+
+## Really?
+
+Yes, really. Just 25 lines of code, but I want to add more features later on.
+
+-   Maybe call an LLM model to post-process the text.
+-   Maybe call a text-to-speech model to read it out loud.
