@@ -6,6 +6,7 @@ import os
 
 def transcribe(path):
     client = OpenAI()
+
     with open(path, "rb") as audio:
         config = {"model": "whisper-1", "file": audio}
         transcription = client.audio.transcriptions.create(**config)
@@ -30,6 +31,7 @@ def tts(text, path, voice="nova"):
 def try_tts(text, output_path, voice):
     if output_path is None:
         raise ValueError("Output file path is required for text-to-speech")
+
     tts(text, output_path, voice)
     print(f"Speech generated and saved to {output_path}")
 
