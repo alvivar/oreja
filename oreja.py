@@ -2,6 +2,9 @@ import sys
 from openai import OpenAI
 import argparse
 import os
+import pyaudio
+import wave
+import signal
 
 
 def transcribe(path):
@@ -36,10 +39,57 @@ def try_tts(text, output_path, voice):
     print(f"Speech generated and saved to {output_path}")
 
 
+def record_audio(output_path, sample_rate=44100, channels=1, chunk=1024):
+    p = pyaudio.PyAudio()
+
+    stream = p.open(
+        format=pyaudio.paInt16,
+        channels=channels,
+        rate=sample_rate,
+        input=True,
+        frames_per_buffer=chunk,
+    )
+
+    print("Recording... Press Ctrl+C to stop.")
+    frames = []
+
+    def signal_handler(sig, frame):
+        nonlocal frames
+        print("\nRecording stopped.")
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        wf = wave.open(output_path, "wb")
+        wf.setnchannels(channels)
+        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+        wf.setframerate(sample_rate)
+        wf.writeframes(b"".join(frames))
+        wf.close()
+
+        print(f"Audio saved to {output_path}")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        while True:
+            data = stream.read(chunk)
+            frames.append(data)
+    except KeyboardInterrupt:
+        pass
+
+
+def record_and_transcribe(output_path):
+    record_audio(output_path)
+    transcription = transcribe(output_path)
+    return transcription
+
+
 if __name__ == "__main__":
-    description = "Transcribe audio files or generate speech from text using OpenAI."
-    input = "Audio file path for transcription, or text content for text-to-speech"
-    output = "Path to save the generated audio file (required for text-to-speech)"
+    description = "Transcribe audio files, generate speech from text, or record and transcribe audio using OpenAI."
+    input = "Audio file path for transcription, text content for text-to-speech, or 'record' to record and transcribe"
+    output = "Path to save the generated audio file (required for text-to-speech and recording)"
     voice = "Voice model for text-to-speech (default: nova)"
 
     parser = argparse.ArgumentParser(description=description)
@@ -69,7 +119,12 @@ if __name__ == "__main__":
     # Use direct text input for TTS if not a file.
 
     try:
-        if os.path.isfile(args.input):
+        if args.input.lower() == "rec":
+            if args.output is None:
+                raise ValueError("Output file path is required for recording")
+            transcription = record_and_transcribe(args.output)
+            print(transcription)
+        elif os.path.isfile(args.input):
             try:
                 with open(args.input, "r", encoding="utf-8") as file:
                     content = file.read()
