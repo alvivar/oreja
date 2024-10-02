@@ -1,0 +1,11 @@
+@echo off
+set "year=%date:~10,4%"
+set "month=%date:~4,2%"
+set "day=%date:~7,2%"
+set "hour=%time:~0,2%"
+set "minute=%time:~3,2%"
+set "second=%time:~6,2%"
+if "%hour:~0,1%" == " " set "hour=0%hour:~1,1%"
+set "filename=%year%-%month%-%day%_%hour%-%minute%-%second%.wav"
+set "filename=%filename: =0%"
+oreja.exe rec --output "%filename%"

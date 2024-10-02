@@ -1,2 +1,5 @@
+*.spec
 *credential*
+build/
+dist/
 output/

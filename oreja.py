@@ -8,6 +8,20 @@ import sys
 import wave
 
 
+# Pyinstaller compatibility: Ensure the correct path for OpenAI API key
+if getattr(sys, "frozen", False):
+    # Running as compiled by pyinstaller
+    # Static file path in the executable directory
+    bundle_dir = sys._MEIPASS
+else:
+    # Running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Set the OpenAI API key from the credential file
+with open(os.path.join(bundle_dir, "openai_api_key.credential"), "r") as key_file:
+    os.environ["OPENAI_API_KEY"] = key_file.read().strip()
+
+
 def transcribe(path):
     client = OpenAI()
 
@@ -40,9 +54,9 @@ def try_tts(text, output_path, voice):
 
 
 # Optimized for voice audio:
-# - Sample rate set to 16000 Hz, which is sufficient for speech and reduces file size
-# - Mono channel (1) is used as stereo is unnecessary for voice recording
-# - Chunk size of 1024 provides a good balance between latency and processing overhead
+# - Sample rate set to 16000 Hz, which is sufficient for speech and reduces file size.
+# - Mono channel (1) is used as stereo is unnecessary for voice recording.
+# - Chunk size of 1024 provides a good balance between latency and processing overhead.
 def record_audio(output_path, sample_rate=16000, channels=1, chunk=1024):
     p = pyaudio.PyAudio()
     frames = []
@@ -56,7 +70,7 @@ def record_audio(output_path, sample_rate=16000, channels=1, chunk=1024):
     signal.signal(signal.SIGINT, signal_handler)
 
     stream = p.open(
-        format=pyaudio.paInt16,  # 16-bit depth is standard for voice and provides good quality
+        format=pyaudio.paInt16,  # 16-bit depth is standard for voice and provides good quality.
         channels=channels,
         rate=sample_rate,
         input=True,

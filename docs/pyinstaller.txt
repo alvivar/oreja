@@ -1,0 +1,1 @@
+pyinstaller --onefile --add-data "openai_api_key.credential:." oreja.py
